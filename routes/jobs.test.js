@@ -69,7 +69,6 @@ describe("POST /jobs", () => {
 describe("GET /jobs", () => {
   test("ok for anon", async () => {
     const resp = await request(app).get("/jobs")
-    console.log(resp.body)
     expect(resp.body).toEqual({
       jobs:
         [{
