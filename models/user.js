@@ -108,20 +108,13 @@ class User {
       u.last_name AS "lastName",
       u.email,
       u.is_admin AS "isAdmin",
-      a.job_id
+      array_agg(a.job_id) AS jobs
 FROM users AS u
-JOIN applications AS a ON u.username = a.username
+LEFT JOIN applications AS a ON u.username = a.username
+GROUP BY u.username
 ORDER BY u.username`
     );
-
-    return [{
-      username: u.username,
-      firstName: firstName,
-      lastName: lastName,
-      email: u.email,
-      isAdmin: isAdmin,
-      jobs: [a.job_id]
-    }]
+    return result.rows
   }
 
   /** Given a username, return data about user.
@@ -146,20 +139,20 @@ WHERE u.username = $1`,
       [username]
     );
 
-    const user = userRes.rows[0];
+    let u = userRes.rows[0];
 
-    if (!user) throw new NotFoundError(`No user: ${username}`);
+    if (!u) throw new NotFoundError(`No user: ${username}`);
 
     return {
       username: u.username,
-      firstName: firstName,
-      lastName: lastName,
+      firstName: u.firstName,
+      lastName: u.lastName,
       email: u.email,
-      isAdmin: isAdmin,
-      jobs: [a.job_id]
+      isAdmin: u.isAdmin,
+      jobs: [u.job_id]
     }
   }
-}
+
 
   /** Update user data with `data`.
    *
@@ -179,63 +172,58 @@ WHERE u.username = $1`,
    */
 
   static async update(username, data) {
-  if (data.password) {
-    data.password = await bcrypt.hash(data.password, BCRYPT_WORK_FACTOR);
-  }
+    if (data.password) {
+      data.password = await bcrypt.hash(data.password, BCRYPT_WORK_FACTOR);
+    }
 
-  const { setCols, values } = sqlForPartialUpdate(
-    data,
-    {
-      firstName: "first_name",
-      lastName: "last_name",
-      isAdmin: "is_admin",
-    });
-  const usernameVarIdx = "$" + (values.length + 1);
+    const { setCols, values } = sqlForPartialUpdate(
+      data,
+      {
+        firstName: "first_name",
+        lastName: "last_name",
+        isAdmin: "is_admin",
+      });
+    const usernameVarIdx = "$" + (values.length + 1);
 
-  const querySql = `UPDATE users
+    const querySql = `UPDATE users
                       SET ${setCols}
                       WHERE username = ${usernameVarIdx}
-                      RETURNING username,
-      first_name AS "firstName",
-      last_name AS "lastName",
-      email,
-      is_admin AS "isAdmin"`;
-  const result = await db.query(querySql, [...values, username]);
-  const user = result.rows[0];
+                      RETURNING username, first_name AS "firstName", last_name AS "lastName", email, is_admin AS "isAdmin"`;
+    const result = await db.query(querySql, [...values, username]);
+    const user = result.rows[0]
+    if (!user) throw new NotFoundError(`No user: ${username}`);
+    delete user.password
 
-  if (!user) throw new NotFoundError(`No user: ${username}`);
-
-  delete user.password;
-  return user;
-}
+    return user
+  }
 
   /** Delete given user from database; returns undefined. */
 
   static async remove(username) {
-  let result = await db.query(
-    `DELETE
+    let result = await db.query(
+      `DELETE
            FROM users
            WHERE username = $1
            RETURNING username`,
-    [username],
-  );
-  const user = result.rows[0];
+      [username],
+    );
+    const user = result.rows[0];
 
-  if (!user) throw new NotFoundError(`No user: ${username}`);
-}
+    if (!user) throw new NotFoundError(`No user: ${username}`);
+  }
 
 
   /**add relationship to applications when user applies for a job */
   static async applyForJob(username, job_id) {
-  const result = await db.query(
-    `INSERT INTO applications
+    const result = await db.query(
+      `INSERT INTO applications
       (username, job_id)
       VALUES($1, $2)
-      RETURNING job_id AS "jobId`, [username, job_id]
-  )
-  const applied = result.rows[0].jobId
-  return applied
-}
+      RETURNING job_id AS "jobId"`, [username, job_id]
+    )
+    const applied = result.rows[0].jobId
+    return applied
+  }
 }
 
 

@@ -100,12 +100,7 @@ describe("filterByName", () => {
     })
   })
   test("not found if no such company", async () => {
-    try {
-      await Company.filterByName("nope");
-      fail();
-    } catch (err) {
-      expect(err instanceof NotFoundError).toBeTruthy();
-    }
+    await expect(Company.filterByName("nope")).rejects.toThrow(NotFoundError);
   })
 })
 
@@ -113,21 +108,17 @@ describe("filterByName", () => {
 describe("filterByRange", () => {
   test("works", async () => {
     let company = await Company.filterByRange(0, 2)
-    expect(company).toEqual({
+    expect(company).toEqual([{
       handle: "c1",
       name: "C1",
       description: "Desc1",
       numEmployees: 1,
       logoUrl: "http://c1.img",
-    })
+    }])
   })
   test("not found if no such company", async () => {
-    try {
-      await Company.filterByRange(3, 1);
-      fail();
-    } catch (err) {
-      expect(err instanceof NotFoundError).toBeTruthy();
-    }
+    await expect(Company.filterByRange(3, 1)).rejects.toThrow(NotFoundError);
+
   })
 })
 
@@ -143,6 +134,12 @@ describe("get", function () {
       description: "Desc1",
       numEmployees: 1,
       logoUrl: "http://c1.img",
+      jobs: [{
+        id: 1,
+        title: "j1",
+        salary: 10000,
+        equity: "0.3"
+      }]
     });
   });
 

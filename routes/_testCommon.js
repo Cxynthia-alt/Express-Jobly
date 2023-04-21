@@ -43,7 +43,7 @@ async function commonBeforeAll() {
     lastName: "U1L",
     email: "user1@user.com",
     password: "password1",
-    isAdmin: false,
+    isAdmin: false
   });
   await User.register({
     username: "u2",
@@ -51,7 +51,7 @@ async function commonBeforeAll() {
     lastName: "U2L",
     email: "user2@user.com",
     password: "password2",
-    isAdmin: false,
+    isAdmin: true
   });
   await User.register({
     username: "u3",
@@ -59,20 +59,24 @@ async function commonBeforeAll() {
     lastName: "U3L",
     email: "user3@user.com",
     password: "password3",
-    isAdmin: false,
+    isAdmin: false
   });
+
   await Job.create({
     title: 'j1',
     salary: 10000,
     equity: 0.3,
-    company_handle: 'c1'
+    companyHandle: 'c1'
   });
   await Job.create({
     title: 'j2',
     salary: 20000,
     equity: 0,
-    company_handle: 'c2'
+    companyHandle: 'c2'
   })
+  await User.applyForJob("u1", 1)
+  await User.applyForJob("u2", 1)
+  await User.applyForJob("u2", 2)
 
 }
 
@@ -82,6 +86,7 @@ async function commonBeforeEach() {
 
 async function commonAfterEach() {
   await db.query("ROLLBACK");
+  await db.query("ALTER SEQUENCE jobs_id_seq RESTART WITH 1");
 }
 
 async function commonAfterAll() {
@@ -90,7 +95,7 @@ async function commonAfterAll() {
 
 
 const u1Token = createToken({ username: "u1", isAdmin: false });
-
+const u2Token = createToken({ username: "u2", isAdmin: true })
 
 module.exports = {
   commonBeforeAll,
@@ -98,4 +103,5 @@ module.exports = {
   commonAfterEach,
   commonAfterAll,
   u1Token,
+  u2Token
 };

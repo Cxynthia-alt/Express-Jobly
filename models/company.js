@@ -68,7 +68,7 @@ class Company {
   static async filterByName(text) {
     const companiesRes = await db.query(
       `SELECT handle, name, description, num_employees AS "numEmployees", logo_url AS "logoUrl" FROM companies WHERE name ~* $1`, [text])
-    if (!companiesRes) throw new NotFoundError(`No company name contains ${text}`);
+    if (companiesRes.rows.length === 0) throw new NotFoundError(`No company name contains ${text}`);
     return companiesRes.rows[0]
   }
 
@@ -78,7 +78,7 @@ Returns [{ handle, name, description, numEmployees, logoUrl }, ...]
 
   static async filterByRange(min, max) {
     const companiesRes = await db.query(`SELECT handle, name, description, num_employees AS "numEmployees", logo_url AS "logoUrl" FROM companies WHERE num_employees > $1 AND num_employees < $2`, [min, max])
-    if (!companiesRes) throw new NotFoundError(`No company name within this range ${min}-${max}`);
+    if (companiesRes.rows.length === 0) throw new NotFoundError(`No company name within this range ${min}-${max}`);
     return companiesRes.rows
   }
 
@@ -101,20 +101,19 @@ Returns [{ handle, name, description, numEmployees, logoUrl }, ...]
       [handle]);
 
     const company = companyRes.rows[0];
-
     if (!company) throw new NotFoundError(`No company: ${handle}`);
 
     return {
-      handle: c.handle,
-      name: c.name,
-      numEmployees: numEmployees,
-      description: c.description,
-      logoUrl: logoUrl,
+      handle: company.handle,
+      name: company.name,
+      numEmployees: company.numEmployees,
+      description: company.description,
+      logoUrl: company.logoUrl,
       jobs: [{
-        id: job_id,
-        title: job_title,
-        salary: job_salary,
-        equity: job_equity
+        id: company.job_id,
+        title: company.job_title,
+        salary: company.job_salary,
+        equity: company.job_equity
       }]
     }
   }

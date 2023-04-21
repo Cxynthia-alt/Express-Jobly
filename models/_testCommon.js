@@ -29,9 +29,14 @@ async function commonBeforeAll() {
       await bcrypt.hash("password2", BCRYPT_WORK_FACTOR),
     ]);
   await db.query(`
-  INSERT INTO jobs(title, salary, equity, company_handle)
-  VALUES('j1', 10000, 0.3, 'c1'),
-  VALUES('j2', 20000, 0, 'c2')`)
+    INSERT INTO jobs(title, salary, equity, company_handle)
+    VALUES ('j1', 10000, 0.3, 'c1'),
+           ('j2', 20000, 0, 'c2')`)
+  await db.query(`
+    INSERT INTO applications(username, job_id)
+    VALUES ('u1',1),
+           ('u2',1),
+           ('u2',2)`)
 }
 
 async function commonBeforeEach() {
@@ -40,6 +45,7 @@ async function commonBeforeEach() {
 
 async function commonAfterEach() {
   await db.query("ROLLBACK");
+  await db.query("ALTER SEQUENCE jobs_id_seq RESTART WITH 1");
 }
 
 async function commonAfterAll() {

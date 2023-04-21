@@ -13,15 +13,15 @@ class Job {
  *
  * Throws BadRequestError if job already in database.
  * */
-  static async create({ title, salary, equity, company_handle }) {
+  static async create({ title, salary, equity, companyHandle }) {
     const result = await db.query(
-      `INSERT INTO jobs
-    (title, salary, equity, company_handle)
-    VALUES ($1, $2, $3, $4, $5)
-    RETURNING title, salary, equity, company_handle AS "companyHandle"`,
-      [title, salary, equity, company_handle]
+      `INSERT INTO jobs(title, salary, equity, company_handle)
+      VALUES ($1, $2, $3, $4)
+      RETURNING title, salary, equity, company_handle AS "companyHandle"`,
+      [title, salary, parseFloat(equity), companyHandle]
     )
     const job = result.rows[0]
+    job.equity = parseFloat(job.equity)
     return job
   }
 
@@ -43,8 +43,8 @@ class Job {
   */
 
   static async filterByTitle(text) {
-    const jobsRes = await db.query(`SELECT * FROM jobs WHERE title ~* $1`, [text])
-    if (!jobsRes) throw new NotFoundError(`No job name contains ${text}`);
+    const jobsRes = await db.query(`SELECT id, title, salary, equity, company_handle AS "companyHandle" FROM jobs WHERE title ~* $1`, [text])
+    if (jobsRes.rows.length === 0) { throw new NotFoundError(`No job name contains ${text}`) }
     return jobsRes.rows
   }
 
@@ -52,8 +52,8 @@ class Job {
 Returns [{ id, title, salary, equity, companyHandle }, ...]
 */
   static async filterByMinSalary(min) {
-    const jobsRes = await db.query(`SELECT * FROM jobs WHERE salary >= $1`, [min])
-    if (!jobsRes) throw new NotFoundError(`No job salary is at least ${min}`);
+    const jobsRes = await db.query(`SELECT id, title, salary, equity, company_handle AS "companyHandle" FROM jobs WHERE salary >= $1`, [min])
+    if (jobsRes.rows.length === 0) throw new NotFoundError(`No job salary is at least ${min}`);
     return jobsRes.rows
   }
 
@@ -79,7 +79,7 @@ Returns [{ id, title, salary, equity, companyHandle }, ...]
       WHERE id = $1`, [id]
     )
     const job = jobsRes.rows[0]
-    if (!job) throw new NotFoundError(`No job id found: ${handle}`);
+    if (!job) throw new NotFoundError(`No job id found: ${id}`);
     return job;
   }
 
@@ -106,7 +106,7 @@ Returns [{ id, title, salary, equity, companyHandle }, ...]
 
     const result = await db.query(querySql, [...values, id])
     const job = result.rows[0]
-    if (!job) throw new NotFoundError(`No job id found: ${handle}`);
+    if (!job) throw new NotFoundError(`No job id found: ${id}`);
     return job;
   }
 
@@ -119,12 +119,12 @@ Returns [{ id, title, salary, equity, companyHandle }, ...]
     const result = await db.query(
       `DELETE
              FROM jobs
-             WHERE handle = $1
+             WHERE id = $1
              RETURNING id`,
       [id]);
     const job = result.rows[0];
 
-    if (!job) throw new NotFoundError(`No job id found: ${id}`);
+    if (result.rows.length === 0) throw new NotFoundError(`No job id found: ${id}`);
   }
 
 }

@@ -61,7 +61,7 @@ router.get("/", async (req, res, next) => {
       const jobs = await Job.filterByHasEquity()
       return res.json({ jobs })
     }
-    const jobs = await job.findAll()
+    const jobs = await Job.findAll()
     return res.json({ jobs })
   } catch (err) {
     return next(err);
@@ -119,7 +119,7 @@ router.patch("/:id", ensureAdmin, async (req, res, next) => {
  */
 
 
-router.delete(":id", ensureAdmin, async (req, res, next) => {
+router.delete("/:id", ensureAdmin, async (req, res, next) => {
   try {
     await Job.remove(req.params.id)
     return res.json({ deleted: req.params.id })

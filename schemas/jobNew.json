@@ -18,15 +18,14 @@
       "minimum": 0,
       "maximum": 1
     },
-    "company_handle": {
+    "companyHandle": {
       "type": "string",
       "maxLength": 25
     }
   },
   "additionalProperties": false,
   "required": [
-    "id",
     "title",
-    "company_handle"
+    "companyHandle"
   ]
 }
